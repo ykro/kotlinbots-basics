@@ -8,14 +8,6 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.ANGLE_INCREASE_PER_STEP
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.INTERVAL_BETWEEN_BLINKS_MS
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.INTERVAL_BETWEEN_STEPS_MS
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.SERVO_MAX_ANGLE
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.SERVO_MIN_ANGLE
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.SERVO_PULSE_MAX_DURATION
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.SERVO_PULSE_MIN_DURATION
-import com.bitandik.labs.kotlinbots.basics.helpers.Constants.Companion.TAG
 import com.google.android.things.contrib.driver.bmx280.Bmx280
 import com.google.android.things.contrib.driver.bmx280.Bmx280SensorDriver
 import com.google.android.things.contrib.driver.button.Button
@@ -29,9 +21,9 @@ import kotlinx.coroutines.experimental.launch
 
 class RainbowHatActivity : Activity(), SensorEventListener {
 
-    private var ledJob: Job? = null
-    private var servoJob: Job? = null
-    //private var sensorJob: Job? = null
+    private lateinit var ledJob: Job
+    private lateinit var servoJob: Job
+    //private lateinit var sensorJob: Job
 
     private lateinit var led: Gpio
     private lateinit var servo: Servo
@@ -62,33 +54,25 @@ class RainbowHatActivity : Activity(), SensorEventListener {
         sensorDriver = RainbowHat.createSensorDriver()
         sensorDriver.registerTemperatureSensor()
 
-        led?.let {
-            ledJob = launch(CommonPool) {
-                ledBlink()
-            }
+        ledJob = launch(CommonPool) {
+            ledBlink()
         }
 
-        button?.let {
-            it.setOnButtonEventListener({ _, pressed ->
-                Log.i(TAG, "GPIO changed, button pressed: " + pressed)
-            })
-        }
+        button.setOnButtonEventListener({ _, pressed ->
+            Log.i(TAG, "GPIO changed, button pressed: " + pressed)
+        })
 
-        servo?.let {
-            it.setPulseDurationRange(SERVO_PULSE_MIN_DURATION, SERVO_PULSE_MAX_DURATION)
-            it.setAngleRange(SERVO_MIN_ANGLE, SERVO_MAX_ANGLE)
-            it.setEnabled(true)
-            servoJob = launch(CommonPool) {
-                servoMove()
-            }
-        }
 
+        servo.setPulseDurationRange(SERVO_PULSE_MIN_DURATION, SERVO_PULSE_MAX_DURATION)
+        servo.setAngleRange(SERVO_MIN_ANGLE, SERVO_MAX_ANGLE)
+        servo.setEnabled(true)
+        servoJob = launch(CommonPool) {
+            servoMove()
+        }
         /*
-        tempSensor?.let {
-            it.setTemperatureOversampling(Bmx280.OVERSAMPLING_1X);
-            servoJob = launch(CommonPool) {
-                readTemp()
-            }
+        tempSensor.setTemperatureOversampling(Bmx280.OVERSAMPLING_1X);
+        sensorJob = launch(CommonPool) {
+            readTemp()
         }
         */
     }
@@ -104,13 +88,13 @@ class RainbowHatActivity : Activity(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "onDestroy")
-        ledJob?.cancel()
-        servoJob?.cancel()
+        ledJob.cancel()
+        servoJob.cancel()
 
-        led?.close()
-        button?.close()
-        servo?.close()
-        tempSensor?.close()
+        led.close()
+        button.close()
+        servo.close()
+        tempSensor.close()
     }
 
     suspend private fun servoMove() {
@@ -136,10 +120,8 @@ class RainbowHatActivity : Activity(), SensorEventListener {
         Log.i(TAG, "accuracy changed: " + accuracy);
     }
 
-    override fun onSensorChanged(event: SensorEvent?) {
-        event?.let {
-            Log.i(TAG, "sensor changed: " + it.values[0]);
-        }
+    override fun onSensorChanged(event: SensorEvent) {
+        Log.i(TAG, "sensor changed: " + event.values[0]);
     }
 
 }
